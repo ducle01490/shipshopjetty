@@ -16,6 +16,7 @@ import org.apache.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import com.shipper.logic.account.AccountLogic;
 import com.shipper.util.LoggerUtil;
 
 
@@ -53,8 +54,8 @@ public class AccountResource {
 		}
 		
 		
-		JSONObject res = new JSONObject();
-		res.put("userName", userName + " - registered");
+		JSONObject res = AccountLogic.register(userName, passWord, role);
+		res.put("log", userName + " -- " + passWord + " -- " + role);
 		
 		return Response.ok(res.toString()).header("Access-Control-Allow-Origin", "*")
 				.header("Access-Control-Allow-Methods", "PUT, GET, POST, DELETE, OPTIONS").build();
@@ -82,11 +83,36 @@ public class AccountResource {
 			logger.error(e);
 		}
 		
-		String result = "";
-		JSONObject res = new JSONObject(result);
+		JSONObject res = AccountLogic.login(userName, passWord, role);
 		return Response.ok(res.toString()).header("Access-Control-Allow-Origin", "*")
 				.header("Access-Control-Allow-Methods", "PUT, GET, POST, DELETE, OPTIONS").build();
 	}
+	
+	
+	@Path("/profile")
+	@POST
+	@Produces("text/plain;charset=utf-8")
+	public Response getProfile(String info, @Context HttpServletRequest req) {
+		String userName = null;
+		int role = -1;
+		try {
+			JSONObject jsonObject = new JSONObject(info);
+			JSONObject data = jsonObject.getJSONObject("data");
+			JSONObject log = jsonObject.getJSONObject("log");
+
+
+			userName = data.getString("userName");
+			role = data.getInt("role");
+			logger.info("login: " + log);
+		} catch (Exception e) { 
+			logger.error(e);
+		}
+		
+		JSONObject res = AccountLogic.getProfile(userName, role);
+		return Response.ok(res.toString()).header("Access-Control-Allow-Origin", "*")
+				.header("Access-Control-Allow-Methods", "PUT, GET, POST, DELETE, OPTIONS").build();
+	}
+	
 	
 	
 	@Path("/reset_password")
@@ -102,14 +128,13 @@ public class AccountResource {
 
 
 			userName = data.getString("userName");
-			userType = data.getInt("userType");
+			userType = data.getInt("role");
 			logger.info("reset_password: " + log);
 		} catch (Exception e) { 
 			logger.error(e);
 		}
 		
-		String result = "";
-		JSONObject res = new JSONObject(result);
+		JSONObject res = AccountLogic.resetPassword(userName, userType);
 		return Response.ok(res.toString()).header("Access-Control-Allow-Origin", "*")
 				.header("Access-Control-Allow-Methods", "PUT, GET, POST, DELETE, OPTIONS").build();
 	}
@@ -131,14 +156,13 @@ public class AccountResource {
 			userName = data.getString("userName");
 			newPassword = data.getString("newPassword");
 			verifiedCode = data.getString("verifiedCode");
-			userType = data.getInt("userType");
+			userType = data.getInt("role");
 			logger.info("update_password: " + log);
 		} catch (Exception e) { 
 			logger.error(e);
 		}
 		
-		String result = "";
-		JSONObject res = new JSONObject(result);
+		JSONObject res = AccountLogic.updatePassword(userName, newPassword, verifiedCode, userType);
 		return Response.ok(res.toString()).header("Access-Control-Allow-Origin", "*")
 				.header("Access-Control-Allow-Methods", "PUT, GET, POST, DELETE, OPTIONS").build();
 	}
@@ -151,7 +175,8 @@ public class AccountResource {
 	@Produces("text/plain;charset=utf-8")
 	public Response updatePhone(String info, @Context HttpServletRequest req) {
 		String userName = null;
-		String phone = null;
+		String phoneNumber = null;
+		//String password = null;
 		int role = -1;
 		try {
 			JSONObject jsonObject = new JSONObject(info);
@@ -160,7 +185,8 @@ public class AccountResource {
 
 
 			userName = data.getString("userName");
-			phone = data.getString("phone");
+			phoneNumber = data.getString("phoneNumber");
+			//password = data.getString("passWord");
 			role = data.getInt("role");
 			
 			logger.info("update_phone: " + log);
@@ -168,8 +194,7 @@ public class AccountResource {
 			logger.error(e);
 		}
 		
-		String result = "";
-		JSONObject res = new JSONObject(result);
+		JSONObject res = AccountLogic.updatePhone(userName, phoneNumber, role);
 		return Response.ok(res.toString()).header("Access-Control-Allow-Origin", "*")
 				.header("Access-Control-Allow-Methods", "PUT, GET, POST, DELETE, OPTIONS").build();
 	}
@@ -188,7 +213,7 @@ public class AccountResource {
 
 
 			userName = data.getString("userName");
-			verifiedCode = data.getString("phone");
+			verifiedCode = data.getString("verifiedCode");
 			role = data.getInt("role");
 			
 			logger.info("verify_phone: " + log);
@@ -196,8 +221,7 @@ public class AccountResource {
 			logger.error(e);
 		}
 		
-		String result = "";
-		JSONObject res = new JSONObject(result);
+		JSONObject res = AccountLogic.verifyPhone(userName, verifiedCode, role);
 		return Response.ok(res.toString()).header("Access-Control-Allow-Origin", "*")
 				.header("Access-Control-Allow-Methods", "PUT, GET, POST, DELETE, OPTIONS").build();
 	}
@@ -219,6 +243,7 @@ public class AccountResource {
 
 
 			userName = data.getString("userName");
+			
 			shopName = data.getString("shopName");
 			address = data.getString("address");
 			facebook = data.getString("facebook");
@@ -230,8 +255,7 @@ public class AccountResource {
 			logger.error(e);
 		}
 		
-		String result = "";
-		JSONObject res = new JSONObject(result);
+		JSONObject res = AccountLogic.updateShopProfile(userName, shopName, address, bankInfo, facebook, zalo);
 		return Response.ok(res.toString()).header("Access-Control-Allow-Origin", "*")
 				.header("Access-Control-Allow-Methods", "PUT, GET, POST, DELETE, OPTIONS").build();
 	}
@@ -257,6 +281,7 @@ public class AccountResource {
 
 
 			userName = data.getString("userName");
+			
 			shipperName = data.getString("shipperName");
 			address = data.getString("address");
 			motorNumber = data.getString("motorNumber");
@@ -268,8 +293,7 @@ public class AccountResource {
 			logger.error(e);
 		}
 		
-		String result = "";
-		JSONObject res = new JSONObject(result);
+		JSONObject res = AccountLogic.updateShipperProfile(userName, shipperName, motorNumber, birthday, address, idNumber);
 		return Response.ok(res.toString()).header("Access-Control-Allow-Origin", "*")
 				.header("Access-Control-Allow-Methods", "PUT, GET, POST, DELETE, OPTIONS").build();
 	}

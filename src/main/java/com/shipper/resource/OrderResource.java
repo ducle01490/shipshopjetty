@@ -16,7 +16,9 @@ import org.apache.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import com.shipper.logic.order.OrderLogic;
 import com.shipper.model.OrderFull;
+import com.shipper.model.OrderTransaction;
 import com.shipper.util.LoggerUtil;
 
 @Path("/order")
@@ -34,8 +36,11 @@ public class OrderResource {
 	@POST
 	@Produces("text/plain;charset=utf-8")
 	public Response createOrder(String info, @Context HttpServletRequest req) {
+		String orderTitle = null;
 		String userName = null;
+		
 		String receiveAddress = null;
+		String customerAddress = null;
 		String customerName = null;
 		String customerPhone = null;
 
@@ -50,9 +55,10 @@ public class OrderResource {
 			JSONObject data = jsonObject.getJSONObject("data");
 			JSONObject log = jsonObject.getJSONObject("log");
 
-
+			orderTitle = data.getString("orderTitle");
 			userName = data.getString("userName");
 			receiveAddress = data.getString("receiveAddress");
+			customerAddress = data.getString("customerAddress");
 			customerName = data.getString("customerName");
 			customerPhone = data.getString("customerPhone");
 			
@@ -69,8 +75,13 @@ public class OrderResource {
 			logger.error(e);
 		}
 		
-		String result = "";
-		JSONObject res = new JSONObject(result);
+		JSONObject res = OrderLogic.createOrder(orderTitle, userName, receiveAddress, customerAddress, customerName, customerPhone, deliveryType, deliveryPrice, productPrice, timeNote, productNote);
+		String resLog = "" + userName + " " + receiveAddress 
+				+ " " + customerAddress + " " + customerName 
+				+ " " + customerPhone 
+				+ " " + deliveryType + " " + productPrice + " " + deliveryPrice
+				+ " " + timeNote + " " + productNote;
+		res.put("log", resLog);
 		return Response.ok(res.toString()).header("Access-Control-Allow-Origin", "*")
 				.header("Access-Control-Allow-Methods", "PUT, GET, POST, DELETE, OPTIONS").build();
 	}
@@ -79,24 +90,23 @@ public class OrderResource {
 	@POST
 	@Produces("text/plain;charset=utf-8")
 	public Response cancelOrder(String info, @Context HttpServletRequest req) {
-		String userName = null;
-		long orderId = -1;
+		String shopUserName = null;
+		int orderId = -1;
 		try {
 			JSONObject jsonObject = new JSONObject(info);
 			JSONObject data = jsonObject.getJSONObject("data");
 			JSONObject log = jsonObject.getJSONObject("log");
 
 
-			userName = data.getString("userName");
-			orderId = data.getLong("orderId");
+			shopUserName = data.getString("userName");
+			orderId = data.getInt("orderId");
 			
 			logger.info("register: " + log);
 		} catch (Exception e) { 
 			logger.error(e);
 		}
 		
-		String result = "";
-		JSONObject res = new JSONObject(result);
+		JSONObject res = OrderLogic.cancelOrder(orderId, shopUserName);
 		return Response.ok(res.toString()).header("Access-Control-Allow-Origin", "*")
 				.header("Access-Control-Allow-Methods", "PUT, GET, POST, DELETE, OPTIONS").build();
 	}
@@ -164,15 +174,15 @@ public class OrderResource {
 	@POST
 	@Produces("text/plain;charset=utf-8")
 	public Response bidOrder(String info, @Context HttpServletRequest req) {
-		String userName = null;
-		long orderId = -1;
+		String shipperUserName = null;
+		int orderId = -1;
 		try {
 			JSONObject jsonObject = new JSONObject(info);
 			JSONObject data = jsonObject.getJSONObject("data");
 			JSONObject log = jsonObject.getJSONObject("log");
 
 
-			userName = data.getString("userName");
+			shipperUserName = data.getString("userName");
 			orderId = data.getInt("orderId");
 			
 			logger.info("register: " + log);
@@ -180,8 +190,7 @@ public class OrderResource {
 			logger.error(e);
 		}
 		
-		String result = "";
-		JSONObject res = new JSONObject(result);
+		JSONObject res = OrderLogic.bidOrder(orderId, shipperUserName);
 		return Response.ok(res.toString()).header("Access-Control-Allow-Origin", "*")
 				.header("Access-Control-Allow-Methods", "PUT, GET, POST, DELETE, OPTIONS").build();
 	}
@@ -190,15 +199,29 @@ public class OrderResource {
 	@GET
 	@Produces("text/plain;charset=utf-8")
 	public Response getOrderList(
-			@QueryParam("cid") @DefaultValue("1795") int cid, 
-			@QueryParam("start") @DefaultValue("0") int start, 
-			@QueryParam("end") @DefaultValue("1") int end, 
+			@QueryParam("status") @DefaultValue("-1") int status, 
+			@QueryParam("startTime") @DefaultValue("-1") long startTime, 
+			@QueryParam("endTime") @DefaultValue("-1") long endTime,
+			@QueryParam("userName") @DefaultValue("-1") String userName, 
 			@Context HttpServletRequest req) {
 		
 		
 		List<OrderFull> data = null;//_dbUtils.getArticleFromDB(cid, start, end);
 		logger.info(data.size());
 		JSONArray res = new JSONArray(data);
+		return Response.ok(res.toString()).header("Access-Control-Allow-Origin", "*")
+				.header("Access-Control-Allow-Methods", "PUT, GET, POST, DELETE, OPTIONS").build();
+	}
+	
+	
+	@Path("/get_order_info")
+	@GET
+	@Produces("text/plain;charset=utf-8")
+	public Response getOrderInfo(
+			@QueryParam("orderId") @DefaultValue("-1") int orderId,
+			@Context HttpServletRequest req) {
+		
+		JSONObject res = OrderLogic.getOrder(orderId);
 		return Response.ok(res.toString()).header("Access-Control-Allow-Origin", "*")
 				.header("Access-Control-Allow-Methods", "PUT, GET, POST, DELETE, OPTIONS").build();
 	}
@@ -211,7 +234,8 @@ public class OrderResource {
 			@Context HttpServletRequest req) {
 		
 		
-		List<OrderFull> data = null;//_dbUtils.getArticleFromDB(cid, start, end);
+		List<OrderFull> data = null;
+		
 		logger.info(data.size());
 		JSONArray res = new JSONArray(data);
 		return Response.ok(res.toString()).header("Access-Control-Allow-Origin", "*")
@@ -222,13 +246,11 @@ public class OrderResource {
 	@GET
 	@Produces("text/plain;charset=utf-8")
 	public Response getOrderStatus(
-			@QueryParam("cid") @DefaultValue("1795") int cid, 
-			@QueryParam("start") @DefaultValue("0") int start, 
-			@QueryParam("end") @DefaultValue("1") int end, 
+			@QueryParam("orderId") @DefaultValue("-1") int orderId, 
 			@Context HttpServletRequest req) {
 		
 		
-		List<OrderFull> data = null;//_dbUtils.getArticleFromDB(cid, start, end);
+		List<OrderTransaction> data = null;//_dbUtils.getArticleFromDB(cid, start, end);
 		logger.info(data.size());
 		JSONArray res = new JSONArray(data);
 		return Response.ok(res.toString()).header("Access-Control-Allow-Origin", "*")
