@@ -336,7 +336,7 @@ public class OrderResource {
 		boolean authen = AccountLogic.checkUserSession(shipperUserName, User.role_shipper, sessionKey);
 		JSONObject res;
 		if(authen) {
-			res = OrderLogic.synBidOrder(orderId, shipperUserName);
+			res = OrderLogic.getShipperAggregate(shipperUserName);
 		} else {
 			res = AccountLogic.genErrorSession();
 		}
