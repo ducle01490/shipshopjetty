@@ -17,6 +17,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import com.shipper.logic.account.AccountLogic;
+import com.shipper.model.User;
 import com.shipper.util.LoggerUtil;
 
 
@@ -95,6 +96,7 @@ public class AccountResource {
 	public Response getProfile(String info, @Context HttpServletRequest req) {
 		String userName = null;
 		int role = -1;
+		String sessionKey = req.getHeader("sessionKey");
 		try {
 			JSONObject jsonObject = new JSONObject(info);
 			JSONObject data = jsonObject.getJSONObject("data");
@@ -108,7 +110,40 @@ public class AccountResource {
 			logger.error(e);
 		}
 		
-		JSONObject res = AccountLogic.getProfile(userName, role);
+		
+		boolean authen = AccountLogic.checkUserSession(userName, role, sessionKey);
+		JSONObject res;
+		if(authen) {
+			res = AccountLogic.getProfile(userName, role);
+			res.put("log", sessionKey);
+		} else {
+			res = AccountLogic.genErrorSession();
+		}
+		return Response.ok(res.toString()).header("Access-Control-Allow-Origin", "*")
+				.header("Access-Control-Allow-Methods", "PUT, GET, POST, DELETE, OPTIONS").build();
+	}
+	
+	
+	@Path("/session")
+	@POST
+	@Produces("text/plain;charset=utf-8")
+	public Response getSession(String info, @Context HttpServletRequest req) {
+		String userName = null;
+		int role = -1;
+		try {
+			JSONObject jsonObject = new JSONObject(info);
+			JSONObject data = jsonObject.getJSONObject("data");
+			JSONObject log = jsonObject.getJSONObject("log");
+
+
+			userName = data.getString("userName");
+			role = data.getInt("role");
+			logger.info("login: " + log);
+		} catch (Exception e) { 
+			logger.error(e);
+		}
+		
+		JSONObject res = AccountLogic.getSession(userName, role);
 		return Response.ok(res.toString()).header("Access-Control-Allow-Origin", "*")
 				.header("Access-Control-Allow-Methods", "PUT, GET, POST, DELETE, OPTIONS").build();
 	}
@@ -120,7 +155,8 @@ public class AccountResource {
 	@Produces("text/plain;charset=utf-8")
 	public Response resetPassword(String info, @Context HttpServletRequest req) {
 		String userName = null;
-		int userType = -1;
+		int role = -1;
+		String sessionKey = req.getHeader("sessionKey");
 		try {
 			JSONObject jsonObject = new JSONObject(info);
 			JSONObject data = jsonObject.getJSONObject("data");
@@ -128,13 +164,19 @@ public class AccountResource {
 
 
 			userName = data.getString("userName");
-			userType = data.getInt("role");
+			role = data.getInt("role");
 			logger.info("reset_password: " + log);
 		} catch (Exception e) { 
 			logger.error(e);
 		}
 		
-		JSONObject res = AccountLogic.resetPassword(userName, userType);
+		boolean authen = true;//AccountLogic.checkUserSession(userName, role, sessionKey);
+		JSONObject res;
+		if(authen) {
+			res = AccountLogic.resetPassword(userName, role);
+		} else {
+			res = AccountLogic.genErrorSession();
+		}
 		return Response.ok(res.toString()).header("Access-Control-Allow-Origin", "*")
 				.header("Access-Control-Allow-Methods", "PUT, GET, POST, DELETE, OPTIONS").build();
 	}
@@ -147,6 +189,7 @@ public class AccountResource {
 		String newPassword = null;
 		String verifiedCode = null;
 		int userType = -1;
+		String sessionKey = req.getHeader("sessionKey");
 		try {
 			JSONObject jsonObject = new JSONObject(info);
 			JSONObject data = jsonObject.getJSONObject("data");
@@ -178,6 +221,8 @@ public class AccountResource {
 		String phoneNumber = null;
 		//String password = null;
 		int role = -1;
+		
+		String sessionKey = req.getHeader("sessionKey");
 		try {
 			JSONObject jsonObject = new JSONObject(info);
 			JSONObject data = jsonObject.getJSONObject("data");
@@ -194,7 +239,13 @@ public class AccountResource {
 			logger.error(e);
 		}
 		
-		JSONObject res = AccountLogic.updatePhone(userName, phoneNumber, role);
+		boolean authen = AccountLogic.checkUserSession(userName, role, sessionKey);
+		JSONObject res;
+		if(authen) {
+			res = AccountLogic.updatePhone(userName, phoneNumber, role);
+		} else {
+			res = AccountLogic.genErrorSession();
+		}
 		return Response.ok(res.toString()).header("Access-Control-Allow-Origin", "*")
 				.header("Access-Control-Allow-Methods", "PUT, GET, POST, DELETE, OPTIONS").build();
 	}
@@ -206,6 +257,7 @@ public class AccountResource {
 		String userName = null;
 		String verifiedCode = null;
 		int role = -1;
+		String sessionKey = req.getHeader("sessionKey");
 		try {
 			JSONObject jsonObject = new JSONObject(info);
 			JSONObject data = jsonObject.getJSONObject("data");
@@ -221,7 +273,14 @@ public class AccountResource {
 			logger.error(e);
 		}
 		
-		JSONObject res = AccountLogic.verifyPhone(userName, verifiedCode, role);
+		
+		boolean authen = AccountLogic.checkUserSession(userName, role, sessionKey);
+		JSONObject res;
+		if(authen) {
+			res = AccountLogic.verifyPhone(userName, verifiedCode, role);
+		} else {
+			res = AccountLogic.genErrorSession();
+		}
 		return Response.ok(res.toString()).header("Access-Control-Allow-Origin", "*")
 				.header("Access-Control-Allow-Methods", "PUT, GET, POST, DELETE, OPTIONS").build();
 	}
@@ -236,6 +295,7 @@ public class AccountResource {
 		String facebook = null;
 		String zalo = null;
 		String bankInfo = null;
+		String sessionKey = req.getHeader("sessionKey");
 		try {
 			JSONObject jsonObject = new JSONObject(info);
 			JSONObject data = jsonObject.getJSONObject("data");
@@ -255,7 +315,13 @@ public class AccountResource {
 			logger.error(e);
 		}
 		
-		JSONObject res = AccountLogic.updateShopProfile(userName, shopName, address, bankInfo, facebook, zalo);
+		boolean authen = AccountLogic.checkUserSession(userName, User.role_shop, sessionKey);
+		JSONObject res;
+		if(authen) {
+			res = AccountLogic.updateShopProfile(userName, shopName, address, bankInfo, facebook, zalo);
+		} else {
+			res = AccountLogic.genErrorSession();
+		}
 		return Response.ok(res.toString()).header("Access-Control-Allow-Origin", "*")
 				.header("Access-Control-Allow-Methods", "PUT, GET, POST, DELETE, OPTIONS").build();
 	}
@@ -273,7 +339,7 @@ public class AccountResource {
 		String address = null;
 		
 		
-		
+		String sessionKey = req.getHeader("sessionKey");
 		try {
 			JSONObject jsonObject = new JSONObject(info);
 			JSONObject data = jsonObject.getJSONObject("data");
@@ -292,8 +358,14 @@ public class AccountResource {
 		} catch (Exception e) { 
 			logger.error(e);
 		}
+		boolean authen = AccountLogic.checkUserSession(userName, User.role_shipper, sessionKey);
+		JSONObject res;
+		if(authen) {
+			res = AccountLogic.updateShipperProfile(userName, shipperName, motorNumber, birthday, address, idNumber);
+		} else {
+			res = AccountLogic.genErrorSession();
+		}
 		
-		JSONObject res = AccountLogic.updateShipperProfile(userName, shipperName, motorNumber, birthday, address, idNumber);
 		return Response.ok(res.toString()).header("Access-Control-Allow-Origin", "*")
 				.header("Access-Control-Allow-Methods", "PUT, GET, POST, DELETE, OPTIONS").build();
 	}
