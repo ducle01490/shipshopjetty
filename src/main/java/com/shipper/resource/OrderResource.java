@@ -344,6 +344,59 @@ public class OrderResource {
 				.header("Access-Control-Allow-Methods", "PUT, GET, POST, DELETE, OPTIONS").build();
 	}
 	
+	
+	@Path("/get_ship_order_list")
+	@GET
+	@Produces("text/plain;charset=utf-8")
+	public Response getShipOrderList(
+			@QueryParam("shipperUserName") @DefaultValue("") String userName, 
+			@QueryParam("status") @DefaultValue("-1") int status, 
+			@QueryParam("offset") @DefaultValue("-1") int offset, 
+			@QueryParam("numb") @DefaultValue("-1") int numb,
+			@Context HttpServletRequest req) {
+		
+		String sessionKey = req.getHeader("sessionKey");
+		boolean authen = AccountLogic.checkSession(sessionKey);
+		JSONObject res;
+		if(authen) {
+			if(status >=0 && status <= 6)
+				res = OrderLogic.getShipperOrderFullList(userName, status, offset, numb);
+			else 
+				res = OrderLogic.getShipperOrderFullList(userName, offset, numb);
+		} else {
+			res = AccountLogic.genErrorSession();
+		}
+		
+		return Response.ok(res.toString()).header("Access-Control-Allow-Origin", "*")
+				.header("Access-Control-Allow-Methods", "PUT, GET, POST, DELETE, OPTIONS").build();
+	}
+	
+	@Path("/get_ship_order_list_by_time")
+	@GET
+	@Produces("text/plain;charset=utf-8")
+	public Response getShipOrderListByTime(
+			@QueryParam("shipperUserName") @DefaultValue("") String userName, 
+			@QueryParam("status") @DefaultValue("-1") int status, 
+			@QueryParam("startTime") @DefaultValue("0000-00-00 00:00:00") String startTime, 
+			@QueryParam("endTime") @DefaultValue("0000-00-00 00:00:00") String endTime, 
+			@Context HttpServletRequest req) {
+		
+		String sessionKey = req.getHeader("sessionKey");
+		boolean authen = AccountLogic.checkSession(sessionKey);
+		JSONObject res;
+		if(authen) {
+			if(status >=0 && status <= 6)
+				res = OrderLogic.getShipperOrderFullByTime(userName, status, startTime, endTime);
+			else 
+				res = OrderLogic.getShipperOrderFullByTime(userName, startTime, endTime);
+		} else {
+			res = AccountLogic.genErrorSession();
+		}
+		
+		
+		return Response.ok(res.toString()).header("Access-Control-Allow-Origin", "*")
+				.header("Access-Control-Allow-Methods", "PUT, GET, POST, DELETE, OPTIONS").build();
+	}
 
 	
 }

@@ -16,7 +16,9 @@ import org.apache.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import com.shipper.logic.Constant;
 import com.shipper.logic.account.AccountLogic;
+import com.shipper.logic.notification.MobilePush;
 import com.shipper.model.User;
 import com.shipper.util.LoggerUtil;
 
@@ -370,8 +372,196 @@ public class AccountResource {
 				.header("Access-Control-Allow-Methods", "PUT, GET, POST, DELETE, OPTIONS").build();
 	}
 	
+	
+	
+	@Path("/shipper/update_geo")
+	@POST
+	@Produces("text/plain;charset=utf-8")
+	public Response updateShipperGeo(String info, @Context HttpServletRequest req) {
+		String shipperUserName = null;
+		String latitude = null;
+		String longitude = null;
+		String address = null;
+		
+		
+		String sessionKey = req.getHeader("sessionKey");
+		try {
+			JSONObject jsonObject = new JSONObject(info);
+			JSONObject data = jsonObject.getJSONObject("data");
+			JSONObject log = jsonObject.getJSONObject("log");
 
+
+			shipperUserName = data.getString("shipperUserName");
+			longitude = data.getString("longitude");
+			latitude = data.getString("latitude");
+			address = data.getString("address");
+			
+			
+			logger.info("shipper_update_profile: " + log);
+		} catch (Exception e) { 
+			logger.error(e);
+		}
+		boolean authen = AccountLogic.checkUserSession(shipperUserName, User.role_shipper, sessionKey);
+		JSONObject res;
+		if(authen) {
+			res = AccountLogic.updateShipperGeo(shipperUserName, latitude, longitude, address);
+		} else {
+			res = AccountLogic.genErrorSession();
+		}
+		
+		return Response.ok(res.toString()).header("Access-Control-Allow-Origin", "*")
+				.header("Access-Control-Allow-Methods", "PUT, GET, POST, DELETE, OPTIONS").build();
+	}
 	
 	
+	@Path("shipper/geo")
+	@POST
+	@Produces("text/plain;charset=utf-8")
+	public Response getShipperGeo(String info, @Context HttpServletRequest req) {
+		String userName = null;
+		String sessionKey = req.getHeader("sessionKey");
+		try {
+			JSONObject jsonObject = new JSONObject(info);
+			JSONObject data = jsonObject.getJSONObject("data");
+			JSONObject log = jsonObject.getJSONObject("log");
+
+
+			userName = data.getString("userName");
+			logger.info("login: " + log);
+		} catch (Exception e) { 
+			logger.error(e);
+		}
+		
+		
+		boolean authen = AccountLogic.checkUserSession(userName, User.role_shipper, sessionKey);
+		JSONObject res;
+		if(authen) {
+			res = AccountLogic.getShipperGeo(userName);
+			res.put("log", sessionKey);
+		} else {
+			res = AccountLogic.genErrorSession();
+		}
+		return Response.ok(res.toString()).header("Access-Control-Allow-Origin", "*")
+				.header("Access-Control-Allow-Methods", "PUT, GET, POST, DELETE, OPTIONS").build();
+	}
+	
+	
+	
+	
+	
+	
+	@Path("/register_push")
+	@POST
+	@Produces("text/plain;charset=utf-8")
+	public Response registerPush(String info, @Context HttpServletRequest req) {
+		String userName = null;
+		String deviceToken = null;
+		int deviceOs = -1;
+		int role = -1;
+		String sessionKey = req.getHeader("sessionKey");
+		try {
+			JSONObject jsonObject = new JSONObject(info);
+			JSONObject data = jsonObject.getJSONObject("data");
+			JSONObject log = jsonObject.getJSONObject("log");
+
+
+			userName = data.getString("userName");
+			deviceToken = data.getString("deviceToken");
+			deviceOs = data.getInt("deviceOs");
+			role = data.getInt("role");
+			
+			logger.info("verify_phone: " + log);
+		} catch (Exception e) { 
+			logger.error(e);
+		}
+		
+		
+		boolean authen = AccountLogic.checkUserSession(userName, role, sessionKey);
+		JSONObject res;
+		if(authen) {
+			if(deviceOs >= 0 && deviceOs <= 1) {
+				res = MobilePush.registerPush(role, userName, deviceToken, deviceOs);
+			} else {
+				res = AccountLogic.genErrorSession("error deviceOs", Constant.error_device_os);
+			}
+		} else {
+			res = AccountLogic.genErrorSession();
+		}
+		return Response.ok(res.toString()).header("Access-Control-Allow-Origin", "*")
+				.header("Access-Control-Allow-Methods", "PUT, GET, POST, DELETE, OPTIONS").build();
+	}
+	
+	
+	@Path("/get_push_info")
+	@POST
+	@Produces("text/plain;charset=utf-8")
+	public Response getPush(String info, @Context HttpServletRequest req) {
+		String userName = null;
+		int role = -1;
+		String sessionKey = req.getHeader("sessionKey");
+		try {
+			JSONObject jsonObject = new JSONObject(info);
+			JSONObject data = jsonObject.getJSONObject("data");
+			JSONObject log = jsonObject.getJSONObject("log");
+
+
+			userName = data.getString("userName");
+			role = data.getInt("role");
+			
+			logger.info("verify_phone: " + log);
+		} catch (Exception e) { 
+			logger.error(e);
+		}
+		
+		
+		boolean authen = AccountLogic.checkSession(sessionKey);
+		JSONObject res;
+		if(authen) {
+			res = MobilePush.getPush(role, userName);
+			
+		} else {
+			res = AccountLogic.genErrorSession();
+		}
+		return Response.ok(res.toString()).header("Access-Control-Allow-Origin", "*")
+				.header("Access-Control-Allow-Methods", "PUT, GET, POST, DELETE, OPTIONS").build();
+	}
+	
+	
+	@Path("/push_user")
+	@POST
+	@Produces("text/plain;charset=utf-8")
+	public Response pushUser(String info, @Context HttpServletRequest req) {
+		String userName = null;
+		String title = null;
+		String message = null;
+		int role = -1;
+		String sessionKey = req.getHeader("sessionKey");
+		try {
+			JSONObject jsonObject = new JSONObject(info);
+			JSONObject data = jsonObject.getJSONObject("data");
+			JSONObject log = jsonObject.getJSONObject("log");
+
+
+			userName = data.getString("userName");
+			title = data.getString("title");
+			message = data.getString("message");
+			role = data.getInt("role");
+			
+			logger.info("push user: " + log);
+		} catch (Exception e) { 
+			logger.error(e);
+		}
+		
+		
+		boolean authen = AccountLogic.checkSession(sessionKey);
+		JSONObject res;
+		if(authen) {
+			res = MobilePush.pushUser(role, userName, title, message);
+		} else {
+			res = AccountLogic.genErrorSession();
+		}
+		return Response.ok(res.toString()).header("Access-Control-Allow-Origin", "*")
+				.header("Access-Control-Allow-Methods", "PUT, GET, POST, DELETE, OPTIONS").build();
+	}
 	
 }
