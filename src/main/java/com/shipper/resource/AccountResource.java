@@ -1,23 +1,18 @@
 package com.shipper.resource;
 
-import java.util.List;
-
 import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.DefaultValue;
-import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 
 import org.apache.log4j.Logger;
-import org.json.JSONArray;
 import org.json.JSONObject;
 
 import com.shipper.logic.Constant;
 import com.shipper.logic.account.AccountLogic;
+import com.shipper.logic.geo.GeoLogic;
 import com.shipper.logic.notification.MobilePush;
 import com.shipper.model.User;
 import com.shipper.util.LoggerUtil;
@@ -297,6 +292,11 @@ public class AccountResource {
 		String facebook = null;
 		String zalo = null;
 		String bankInfo = null;
+		
+		String city = GeoLogic.hanoi;
+		String province = GeoLogic.hanoi_provinces[0];
+		int cityGeoId = 1;
+		
 		String sessionKey = req.getHeader("sessionKey");
 		try {
 			JSONObject jsonObject = new JSONObject(info);
@@ -312,6 +312,10 @@ public class AccountResource {
 			zalo = data.getString("zalo");
 			bankInfo = data.getString("bankInfo");
 			
+			city = data.getString("city");
+			province = data.getString("province");
+			cityGeoId = data.getInt("cityGeoId");
+			
 			logger.info("shop_update_profile: " + log);
 		} catch (Exception e) { 
 			logger.error(e);
@@ -320,7 +324,7 @@ public class AccountResource {
 		boolean authen = AccountLogic.checkUserSession(userName, User.role_shop, sessionKey);
 		JSONObject res;
 		if(authen) {
-			res = AccountLogic.updateShopProfile(userName, shopName, address, bankInfo, facebook, zalo);
+			res = AccountLogic.updateShopProfile(userName, shopName, address, bankInfo, facebook, zalo, city, province, cityGeoId);
 		} else {
 			res = AccountLogic.genErrorSession();
 		}
@@ -341,6 +345,8 @@ public class AccountResource {
 		String address = null;
 		
 		
+		
+		
 		String sessionKey = req.getHeader("sessionKey");
 		try {
 			JSONObject jsonObject = new JSONObject(info);
@@ -355,6 +361,8 @@ public class AccountResource {
 			motorNumber = data.getString("motorNumber");
 			idNumber = data.getString("idNumber");
 			birthday = data.getString("birthday");
+			
+			
 			
 			logger.info("shipper_update_profile: " + log);
 		} catch (Exception e) { 
@@ -437,6 +445,82 @@ public class AccountResource {
 		JSONObject res;
 		if(authen) {
 			res = AccountLogic.getShipperGeo(userName);
+			res.put("log", sessionKey);
+		} else {
+			res = AccountLogic.genErrorSession();
+		}
+		return Response.ok(res.toString()).header("Access-Control-Allow-Origin", "*")
+				.header("Access-Control-Allow-Methods", "PUT, GET, POST, DELETE, OPTIONS").build();
+	}
+	
+	
+	
+	
+	@Path("/shipper/update_province")
+	@POST
+	@Produces("text/plain;charset=utf-8")
+	public Response updateShipperProvince(String info, @Context HttpServletRequest req) {
+		String shipperUserName = null;
+		int geoId = -1;
+		String city = "";
+		String province = "";
+		String detail = "";
+		
+		
+		String sessionKey = req.getHeader("sessionKey");
+		try {
+			JSONObject jsonObject = new JSONObject(info);
+			JSONObject data = jsonObject.getJSONObject("data");
+			JSONObject log = jsonObject.getJSONObject("log");
+
+
+			shipperUserName = data.getString("shipperUserName");
+			city = data.getString("city");
+			province = data.getString("province");
+			//detail = data.getString("detail");
+			geoId = data.getInt("geoId");
+			
+			
+			logger.info("shipper_update_profile: " + log);
+		} catch (Exception e) { 
+			logger.error(e);
+		}
+		boolean authen = AccountLogic.checkUserSession(shipperUserName, User.role_shipper, sessionKey);
+		JSONObject res;
+		if(authen) {
+			res = AccountLogic.updateShipperProvince(shipperUserName,geoId, city, province, detail);
+		} else {
+			res = AccountLogic.genErrorSession();
+		}
+		
+		return Response.ok(res.toString()).header("Access-Control-Allow-Origin", "*")
+				.header("Access-Control-Allow-Methods", "PUT, GET, POST, DELETE, OPTIONS").build();
+	}
+	
+	
+	@Path("shipper/province")
+	@POST
+	@Produces("text/plain;charset=utf-8")
+	public Response getShipperProvince(String info, @Context HttpServletRequest req) {
+		String userName = null;
+		String sessionKey = req.getHeader("sessionKey");
+		try {
+			JSONObject jsonObject = new JSONObject(info);
+			JSONObject data = jsonObject.getJSONObject("data");
+			JSONObject log = jsonObject.getJSONObject("log");
+
+
+			userName = data.getString("userName");
+			logger.info("login: " + log);
+		} catch (Exception e) { 
+			logger.error(e);
+		}
+		
+		
+		boolean authen = AccountLogic.checkUserSession(userName, User.role_shipper, sessionKey);
+		JSONObject res;
+		if(authen) {
+			res = AccountLogic.getShipperProvince(userName);
 			res.put("log", sessionKey);
 		} else {
 			res = AccountLogic.genErrorSession();
@@ -561,6 +645,24 @@ public class AccountResource {
 			res = AccountLogic.genErrorSession();
 		}
 		return Response.ok(res.toString()).header("Access-Control-Allow-Origin", "*")
+				.header("Access-Control-Allow-Methods", "PUT, GET, POST, DELETE, OPTIONS").build();
+	}
+	
+	@Path("/init_city_geo")
+	@POST
+	@Produces("text/plain;charset=utf-8")
+	public Response initCityGeo(String info, @Context HttpServletRequest req) {
+		GeoLogic.initGeo();
+		return Response.ok("ok").header("Access-Control-Allow-Origin", "*")
+				.header("Access-Control-Allow-Methods", "PUT, GET, POST, DELETE, OPTIONS").build();
+	}
+	
+	@Path("/get_city_geo")
+	@POST
+	@Produces("text/plain;charset=utf-8")
+	public Response getCityGeo(String info, @Context HttpServletRequest req) {
+		JSONObject res = GeoLogic.getGeoList();
+		return Response.ok(res).header("Access-Control-Allow-Origin", "*")
 				.header("Access-Control-Allow-Methods", "PUT, GET, POST, DELETE, OPTIONS").build();
 	}
 	

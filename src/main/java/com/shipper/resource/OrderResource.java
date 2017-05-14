@@ -200,6 +200,60 @@ public class OrderResource {
 	}
 	
 	
+	
+	
+	@Path("/update_order_paid")
+	@POST
+	@Produces("text/plain;charset=utf-8")
+	public Response updateOrderPaid(String info, @Context HttpServletRequest req) {
+		String userName = null;
+		long orderPaid = 0;
+		int orderId = -1;
+		int role = -1;
+		
+		String sessionKey = req.getHeader("sessionKey");
+		try {
+			JSONObject jsonObject = new JSONObject(info);
+			JSONObject data = jsonObject.getJSONObject("data");
+			JSONObject log = jsonObject.getJSONObject("log");
+
+			userName = data.getString("userName");
+			orderPaid = data.getLong("paid");
+			orderId = data.getInt("orderId");
+			role = data.getInt("role");
+			
+			logger.info("register: " + log);
+		} catch (Exception e) { 
+			logger.error(e);
+		}
+		
+		boolean authen = AccountLogic.checkUserSession(userName, role, sessionKey);
+		JSONObject res;
+		if(authen) {
+			res = OrderLogic.updateOrderPaid(orderId, orderPaid, role);
+		} else {
+			res = AccountLogic.genErrorSession();
+		}
+		return Response.ok(res.toString()).header("Access-Control-Allow-Origin", "*")
+				.header("Access-Control-Allow-Methods", "PUT, GET, POST, DELETE, OPTIONS").build();
+	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 	@Path("/bid_order")
 	@POST
 	@Produces("text/plain;charset=utf-8")
@@ -345,6 +399,27 @@ public class OrderResource {
 	}
 	
 	
+	@Path("/shop_aggregate")
+	@GET
+	@Produces("text/plain;charset=utf-8")
+	public Response getShopAggregate(
+			@QueryParam("shopUserName") @DefaultValue("") String shopUserName,
+			@Context HttpServletRequest req) {
+		String sessionKey = req.getHeader("sessionKey");
+		
+		boolean authen = AccountLogic.checkUserSession(shopUserName, User.role_shop, sessionKey);
+		JSONObject res;
+		if(authen) {
+			res = OrderLogic.getShopAggregate(shopUserName);
+		} else {
+			res = AccountLogic.genErrorSession();
+		}
+		return Response.ok(res.toString()).header("Access-Control-Allow-Origin", "*")
+				.header("Access-Control-Allow-Methods", "PUT, GET, POST, DELETE, OPTIONS").build();
+	}
+	
+	
+	
 	@Path("/get_ship_order_list")
 	@GET
 	@Produces("text/plain;charset=utf-8")
@@ -392,6 +467,47 @@ public class OrderResource {
 		} else {
 			res = AccountLogic.genErrorSession();
 		}
+		
+		
+		return Response.ok(res.toString()).header("Access-Control-Allow-Origin", "*")
+				.header("Access-Control-Allow-Methods", "PUT, GET, POST, DELETE, OPTIONS").build();
+	}
+	
+	
+	
+	
+	@Path("/update_config")
+	@POST
+	@Produces("text/plain;charset=utf-8")
+	public Response updateConfig(String info, @Context HttpServletRequest req) {
+		String key = "";
+		String value = "";
+		
+		try {
+			JSONObject data = new JSONObject(info);
+
+
+			key = data.getString("key");
+			value = data.getString("value");
+			
+		} catch (Exception e) { 
+			logger.error(e);
+		}
+		
+		boolean r = OrderLogic.updateConfig(key, value);
+		
+		return Response.ok(r).header("Access-Control-Allow-Origin", "*")
+				.header("Access-Control-Allow-Methods", "PUT, GET, POST, DELETE, OPTIONS").build();
+	}
+	
+	
+	
+	@Path("/get_config")
+	@GET
+	@Produces("text/plain;charset=utf-8")
+	public Response getConfig(@Context HttpServletRequest req) {
+		
+		JSONObject res = OrderLogic.getConfig();
 		
 		
 		return Response.ok(res.toString()).header("Access-Control-Allow-Origin", "*")
