@@ -342,7 +342,7 @@ public class AccountResource {
 		String motorNumber = null;
 		String birthday = null;
 		String idNumber = null;
-		String address = null;
+		String address = "";
 		
 		
 		
@@ -357,7 +357,7 @@ public class AccountResource {
 			userName = data.getString("userName");
 			
 			shipperName = data.getString("shipperName");
-			address = data.getString("address");
+			//address = data.getString("address");
 			motorNumber = data.getString("motorNumber");
 			idNumber = data.getString("idNumber");
 			birthday = data.getString("birthday");

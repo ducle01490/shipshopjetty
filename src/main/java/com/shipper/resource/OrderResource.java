@@ -218,7 +218,7 @@ public class OrderResource {
 			JSONObject log = jsonObject.getJSONObject("log");
 
 			userName = data.getString("userName");
-			orderPaid = data.getLong("paid");
+			orderPaid = data.getLong("orderPaid");
 			orderId = data.getInt("orderId");
 			role = data.getInt("role");
 			
@@ -322,6 +322,8 @@ public class OrderResource {
 			@QueryParam("status") @DefaultValue("-1") int status, 
 			@QueryParam("startTime") @DefaultValue("0000-00-00 00:00:00") String startTime, 
 			@QueryParam("endTime") @DefaultValue("0000-00-00 00:00:00") String endTime, 
+			@QueryParam("offset") @DefaultValue("0") int offset, 
+			@QueryParam("numb") @DefaultValue("10") int numb,
 			@Context HttpServletRequest req) {
 		
 		String sessionKey = req.getHeader("sessionKey");
@@ -329,9 +331,9 @@ public class OrderResource {
 		JSONObject res;
 		if(authen) {
 			if(status >=0 && status <= 6)
-				res = OrderLogic.getOrderFullByTime(userName, status, startTime, endTime);
+				res = OrderLogic.getOrderFullByTime(userName, status, startTime, endTime, offset, numb);
 			else 
-				res = OrderLogic.getOrderFullByTime(userName, startTime, endTime);
+				res = OrderLogic.getOrderFullByTime(userName, startTime, endTime, offset, numb);
 		} else {
 			res = AccountLogic.genErrorSession();
 		}
@@ -379,18 +381,30 @@ public class OrderResource {
 				.header("Access-Control-Allow-Methods", "PUT, GET, POST, DELETE, OPTIONS").build();
 	}
 	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 	@Path("/shipper_aggregate")
 	@GET
 	@Produces("text/plain;charset=utf-8")
 	public Response getShipperAggregate(
 			@QueryParam("shipperUserName") @DefaultValue("") String shipperUserName,
+			@QueryParam("orderStatus") @DefaultValue("-1") int orderStatus,
 			@Context HttpServletRequest req) {
 		String sessionKey = req.getHeader("sessionKey");
 		
 		boolean authen = AccountLogic.checkUserSession(shipperUserName, User.role_shipper, sessionKey);
 		JSONObject res;
 		if(authen) {
-			res = OrderLogic.getShipperAggregate(shipperUserName);
+			
+			res = OrderLogic.getShipperAggregate(shipperUserName, orderStatus);
+			
 		} else {
 			res = AccountLogic.genErrorSession();
 		}
@@ -404,19 +418,72 @@ public class OrderResource {
 	@Produces("text/plain;charset=utf-8")
 	public Response getShopAggregate(
 			@QueryParam("shopUserName") @DefaultValue("") String shopUserName,
+			@QueryParam("orderStatus") @DefaultValue("-1") int orderStatus,
 			@Context HttpServletRequest req) {
 		String sessionKey = req.getHeader("sessionKey");
 		
 		boolean authen = AccountLogic.checkUserSession(shopUserName, User.role_shop, sessionKey);
 		JSONObject res;
 		if(authen) {
-			res = OrderLogic.getShopAggregate(shopUserName);
+			res = OrderLogic.getShopAggregate(shopUserName, orderStatus);
+			
 		} else {
 			res = AccountLogic.genErrorSession();
 		}
 		return Response.ok(res.toString()).header("Access-Control-Allow-Origin", "*")
 				.header("Access-Control-Allow-Methods", "PUT, GET, POST, DELETE, OPTIONS").build();
 	}
+	
+	
+	
+	
+	
+	
+	
+	
+	@Path("/shipper_aggregate_time")
+	@GET
+	@Produces("text/plain;charset=utf-8")
+	public Response getShipperAggregateTime(
+			@QueryParam("shipperUserName") @DefaultValue("") String shipperUserName,
+			@Context HttpServletRequest req) {
+		String sessionKey = req.getHeader("sessionKey");
+		
+		boolean authen = AccountLogic.checkUserSession(shipperUserName, User.role_shipper, sessionKey);
+		JSONObject res;
+		if(authen) {
+			res = OrderLogic.getShipperAggregate(shipperUserName, -1);
+		} else {
+			res = AccountLogic.genErrorSession();
+		}
+		return Response.ok(res.toString()).header("Access-Control-Allow-Origin", "*")
+				.header("Access-Control-Allow-Methods", "PUT, GET, POST, DELETE, OPTIONS").build();
+	}
+	
+	
+	@Path("/shop_aggregate_time")
+	@GET
+	@Produces("text/plain;charset=utf-8")
+	public Response getShopAggregateTime(
+			@QueryParam("shopUserName") @DefaultValue("") String shopUserName,
+			@Context HttpServletRequest req) {
+		String sessionKey = req.getHeader("sessionKey");
+		
+		boolean authen = AccountLogic.checkUserSession(shopUserName, User.role_shop, sessionKey);
+		JSONObject res;
+		if(authen) {
+			res = OrderLogic.getShopAggregate(shopUserName, -1);
+		} else {
+			res = AccountLogic.genErrorSession();
+		}
+		return Response.ok(res.toString()).header("Access-Control-Allow-Origin", "*")
+				.header("Access-Control-Allow-Methods", "PUT, GET, POST, DELETE, OPTIONS").build();
+	}
+	
+	
+	
+	
+	
 	
 	
 	
@@ -454,6 +521,8 @@ public class OrderResource {
 			@QueryParam("status") @DefaultValue("-1") int status, 
 			@QueryParam("startTime") @DefaultValue("0000-00-00 00:00:00") String startTime, 
 			@QueryParam("endTime") @DefaultValue("0000-00-00 00:00:00") String endTime, 
+			@QueryParam("offset") @DefaultValue("0") int offset, 
+			@QueryParam("numb") @DefaultValue("10") int numb,
 			@Context HttpServletRequest req) {
 		
 		String sessionKey = req.getHeader("sessionKey");
@@ -461,9 +530,9 @@ public class OrderResource {
 		JSONObject res;
 		if(authen) {
 			if(status >=0 && status <= 6)
-				res = OrderLogic.getShipperOrderFullByTime(userName, status, startTime, endTime);
+				res = OrderLogic.getShipperOrderFullByTime(userName, status, startTime, endTime, offset, numb);
 			else 
-				res = OrderLogic.getShipperOrderFullByTime(userName, startTime, endTime);
+				res = OrderLogic.getShipperOrderFullByTime(userName, startTime, endTime, offset, numb);
 		} else {
 			res = AccountLogic.genErrorSession();
 		}
