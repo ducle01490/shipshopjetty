@@ -390,6 +390,8 @@ public class OrderResource {
 	
 	
 	
+	
+	
 	@Path("/shipper_aggregate")
 	@GET
 	@Produces("text/plain;charset=utf-8")
@@ -441,18 +443,26 @@ public class OrderResource {
 	
 	
 	
+
+	
+	
 	@Path("/shipper_aggregate_time")
 	@GET
 	@Produces("text/plain;charset=utf-8")
 	public Response getShipperAggregateTime(
 			@QueryParam("shipperUserName") @DefaultValue("") String shipperUserName,
+			@QueryParam("orderStatus") @DefaultValue("-1") int orderStatus,
+			@QueryParam("startTime") @DefaultValue("0000-00-00 00:00:00") String startTime, 
+			@QueryParam("endTime") @DefaultValue("0000-00-00 00:00:00") String endTime, 
 			@Context HttpServletRequest req) {
 		String sessionKey = req.getHeader("sessionKey");
 		
 		boolean authen = AccountLogic.checkUserSession(shipperUserName, User.role_shipper, sessionKey);
 		JSONObject res;
 		if(authen) {
-			res = OrderLogic.getShipperAggregate(shipperUserName, -1);
+			
+			res = OrderLogic.getShipperAggregateByTime(shipperUserName, orderStatus, startTime, endTime);
+			
 		} else {
 			res = AccountLogic.genErrorSession();
 		}
@@ -466,19 +476,144 @@ public class OrderResource {
 	@Produces("text/plain;charset=utf-8")
 	public Response getShopAggregateTime(
 			@QueryParam("shopUserName") @DefaultValue("") String shopUserName,
+			@QueryParam("orderStatus") @DefaultValue("-1") int orderStatus,
+			@QueryParam("startTime") @DefaultValue("0000-00-00 00:00:00") String startTime, 
+			@QueryParam("endTime") @DefaultValue("0000-00-00 00:00:00") String endTime, 
 			@Context HttpServletRequest req) {
 		String sessionKey = req.getHeader("sessionKey");
 		
 		boolean authen = AccountLogic.checkUserSession(shopUserName, User.role_shop, sessionKey);
 		JSONObject res;
 		if(authen) {
-			res = OrderLogic.getShopAggregate(shopUserName, -1);
+			res = OrderLogic.getShopAggregateByTime(shopUserName, orderStatus, startTime, endTime);
+			
 		} else {
 			res = AccountLogic.genErrorSession();
 		}
 		return Response.ok(res.toString()).header("Access-Control-Allow-Origin", "*")
 				.header("Access-Control-Allow-Methods", "PUT, GET, POST, DELETE, OPTIONS").build();
 	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	@Path("/shipper_date_aggregate")
+	@GET
+	@Produces("text/plain;charset=utf-8")
+	public Response getShipperDateAggregate(
+			@QueryParam("shipperUserName") @DefaultValue("") String shipperUserName,
+			@QueryParam("orderStatus") @DefaultValue("-1") int orderStatus,
+			@QueryParam("startTime") @DefaultValue("0000-00-00 00:00:00") String startTime, 
+			@QueryParam("endTime") @DefaultValue("0000-00-00 00:00:00") String endTime, 
+			@Context HttpServletRequest req) {
+		String sessionKey = req.getHeader("sessionKey");
+		
+		boolean authen = AccountLogic.checkUserSession(shipperUserName, User.role_shipper, sessionKey);
+		JSONObject res;
+		if(authen) {
+			
+			res = OrderLogic.getShipperDateAggregate(shipperUserName, orderStatus, startTime, endTime);
+			
+		} else {
+			res = AccountLogic.genErrorSession();
+		}
+		return Response.ok(res.toString()).header("Access-Control-Allow-Origin", "*")
+				.header("Access-Control-Allow-Methods", "PUT, GET, POST, DELETE, OPTIONS").build();
+	}
+	
+	
+	@Path("/shop_date_aggregate")
+	@GET
+	@Produces("text/plain;charset=utf-8")
+	public Response getShopDateAggregate(
+			@QueryParam("shopUserName") @DefaultValue("") String shopUserName,
+			@QueryParam("orderStatus") @DefaultValue("-1") int orderStatus,
+			@QueryParam("startTime") @DefaultValue("0000-00-00 00:00:00") String startTime, 
+			@QueryParam("endTime") @DefaultValue("0000-00-00 00:00:00") String endTime, 
+			@Context HttpServletRequest req) {
+		String sessionKey = req.getHeader("sessionKey");
+		
+		boolean authen = AccountLogic.checkUserSession(shopUserName, User.role_shop, sessionKey);
+		JSONObject res;
+		if(authen) {
+			res = OrderLogic.getShopDateAggregate(shopUserName, orderStatus, startTime, endTime);
+			
+		} else {
+			res = AccountLogic.genErrorSession();
+		}
+		return Response.ok(res.toString()).header("Access-Control-Allow-Origin", "*")
+				.header("Access-Control-Allow-Methods", "PUT, GET, POST, DELETE, OPTIONS").build();
+	}
+	
+	
+	
+	
+	
+	
+	
+	
+
+	
+	
+	@Path("/shipper_date_aggregate_time")
+	@GET
+	@Produces("text/plain;charset=utf-8")
+	public Response getShipperDateAggregateTime(
+			@QueryParam("shipperUserName") @DefaultValue("") String shipperUserName,
+			@QueryParam("orderStatus") @DefaultValue("-1") int orderStatus,
+			@QueryParam("startTime") @DefaultValue("0000-00-00 00:00:00") String startTime, 
+			@QueryParam("endTime") @DefaultValue("0000-00-00 00:00:00") String endTime, 
+			@Context HttpServletRequest req) {
+		String sessionKey = req.getHeader("sessionKey");
+		
+		boolean authen = AccountLogic.checkUserSession(shipperUserName, User.role_shipper, sessionKey);
+		JSONObject res;
+		if(authen) {
+			
+			res = OrderLogic.getShipperAggregateByTime(shipperUserName, orderStatus, startTime, endTime);
+			
+		} else {
+			res = AccountLogic.genErrorSession();
+		}
+		return Response.ok(res.toString()).header("Access-Control-Allow-Origin", "*")
+				.header("Access-Control-Allow-Methods", "PUT, GET, POST, DELETE, OPTIONS").build();
+	}
+	
+	
+	@Path("/shop_date_aggregate_time")
+	@GET
+	@Produces("text/plain;charset=utf-8")
+	public Response getShopDateAggregateTime(
+			@QueryParam("shopUserName") @DefaultValue("") String shopUserName,
+			@QueryParam("orderStatus") @DefaultValue("-1") int orderStatus,
+			@QueryParam("startTime") @DefaultValue("0000-00-00 00:00:00") String startTime, 
+			@QueryParam("endTime") @DefaultValue("0000-00-00 00:00:00") String endTime, 
+			@Context HttpServletRequest req) {
+		String sessionKey = req.getHeader("sessionKey");
+		
+		boolean authen = AccountLogic.checkUserSession(shopUserName, User.role_shop, sessionKey);
+		JSONObject res;
+		if(authen) {
+			res = OrderLogic.getShopAggregateByTime(shopUserName, orderStatus, startTime, endTime);
+			
+		} else {
+			res = AccountLogic.genErrorSession();
+		}
+		return Response.ok(res.toString()).header("Access-Control-Allow-Origin", "*")
+				.header("Access-Control-Allow-Methods", "PUT, GET, POST, DELETE, OPTIONS").build();
+	}
+	
+	
+	
+	
 	
 	
 	
