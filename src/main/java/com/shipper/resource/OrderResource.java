@@ -240,6 +240,44 @@ public class OrderResource {
 	
 	
 	
+	@Path("/update_product_price")
+	@POST
+	@Produces("text/plain;charset=utf-8")
+	public Response updateProductPrice(String info, @Context HttpServletRequest req) {
+		String userName = null;
+		long productPrice = 0;
+		int orderId = -1;
+		int role = -1;
+		
+		String sessionKey = req.getHeader("sessionKey");
+		try {
+			JSONObject jsonObject = new JSONObject(info);
+			JSONObject data = jsonObject.getJSONObject("data");
+			JSONObject log = jsonObject.getJSONObject("log");
+
+			userName = data.getString("userName");
+			productPrice = data.getLong("productPrice");
+			orderId = data.getInt("orderId");
+			role = data.getInt("role");
+			
+			logger.info("register: " + log);
+		} catch (Exception e) { 
+			logger.error(e);
+		}
+		
+		boolean authen = AccountLogic.checkUserSession(userName, role, sessionKey);
+		JSONObject res;
+		if(authen) {
+			res = OrderLogic.updateProductPrice(orderId, productPrice, role);
+		} else {
+			res = AccountLogic.genErrorSession();
+		}
+		return Response.ok(res.toString()).header("Access-Control-Allow-Origin", "*")
+				.header("Access-Control-Allow-Methods", "PUT, GET, POST, DELETE, OPTIONS").build();
+	}
+	
+	
+	
 	
 	
 	
@@ -500,7 +538,28 @@ public class OrderResource {
 	
 	
 	
-	
+	@Path("/date_aggregate")
+	@GET
+	@Produces("text/plain;charset=utf-8")
+	public Response getDateAggregate(
+			@QueryParam("orderStatus") @DefaultValue("-1") int orderStatus,
+			@QueryParam("startTime") @DefaultValue("0000-00-00 00:00:00") String startTime, 
+			@QueryParam("endTime") @DefaultValue("0000-00-00 00:00:00") String endTime, 
+			@Context HttpServletRequest req) {
+		String sessionKey = req.getHeader("sessionKey");
+		
+		boolean authen = AccountLogic.checkSession(sessionKey);
+		JSONObject res;
+		if(authen) {
+			
+			res = OrderLogic.getDateAggregate(orderStatus, startTime, endTime);
+			
+		} else {
+			res = AccountLogic.genErrorSession();
+		}
+		return Response.ok(res.toString()).header("Access-Control-Allow-Origin", "*")
+				.header("Access-Control-Allow-Methods", "PUT, GET, POST, DELETE, OPTIONS").build();
+	}
 	
 	
 	
@@ -616,10 +675,58 @@ public class OrderResource {
 	
 	
 	
+	@Path("/get_geo_order_list")
+	@GET
+	@Produces("text/plain;charset=utf-8")
+	public Response getGeoOrderList(
+			@QueryParam("geoId") @DefaultValue("-1") int geoId, 
+			@QueryParam("status") @DefaultValue("-1") int status, 
+			@QueryParam("offset") @DefaultValue("-1") int offset, 
+			@QueryParam("numb") @DefaultValue("-1") int numb,
+			@Context HttpServletRequest req) {
+		
+		String sessionKey = req.getHeader("sessionKey");
+		boolean authen = AccountLogic.checkSession(sessionKey);
+		JSONObject res;
+		if(authen) {
+			if(status >=0 && status <= 6)
+				res = OrderLogic.getGeoOrderFullList(geoId, status, offset, numb);
+			else 
+				res = OrderLogic.getGeoOrderFullList(geoId, offset, numb);
+		} else {
+			res = AccountLogic.genErrorSession();
+		}
+		
+		return Response.ok(res.toString()).header("Access-Control-Allow-Origin", "*")
+				.header("Access-Control-Allow-Methods", "PUT, GET, POST, DELETE, OPTIONS").build();
+	}
 	
 	
-	
-	
+	@Path("/get_ship_province_order_list")
+	@GET
+	@Produces("text/plain;charset=utf-8")
+	public Response getShipOrderListByProvince(
+			@QueryParam("shipperUserName") @DefaultValue("") String userName, 
+			@QueryParam("status") @DefaultValue("-1") int status, 
+			@QueryParam("offset") @DefaultValue("-1") int offset, 
+			@QueryParam("numb") @DefaultValue("-1") int numb,
+			@Context HttpServletRequest req) {
+		
+		String sessionKey = req.getHeader("sessionKey");
+		boolean authen = AccountLogic.checkSession(sessionKey);
+		JSONObject res;
+		if(authen) {
+			if(status >=0 && status <= 6)
+				res = OrderLogic.getShipperProvinceOrderFullList(userName, status, offset, numb);
+			else 
+				res = OrderLogic.getShipperProvinceOrderFullList(userName, offset, numb);
+		} else {
+			res = AccountLogic.genErrorSession();
+		}
+		
+		return Response.ok(res.toString()).header("Access-Control-Allow-Origin", "*")
+				.header("Access-Control-Allow-Methods", "PUT, GET, POST, DELETE, OPTIONS").build();
+	}
 	
 	
 	@Path("/get_ship_order_list")
@@ -636,10 +743,13 @@ public class OrderResource {
 		boolean authen = AccountLogic.checkSession(sessionKey);
 		JSONObject res;
 		if(authen) {
-			if(status >=0 && status <= 6)
+			if(status == 0) {
+				res = OrderLogic.getShipperProvinceOrderFullList(userName,0, offset, numb);
+			}
+			else if(status >=1 && status <= 6)
 				res = OrderLogic.getShipperOrderFullList(userName, status, offset, numb);
 			else 
-				res = OrderLogic.getShipperOrderFullList(userName, offset, numb);
+				res = OrderLogic.getShipperOrderFullList("", 0, offset, numb);
 		} else {
 			res = AccountLogic.genErrorSession();
 		}
@@ -664,10 +774,13 @@ public class OrderResource {
 		boolean authen = AccountLogic.checkSession(sessionKey);
 		JSONObject res;
 		if(authen) {
-			if(status >=0 && status <= 6)
+			if(status == 0) {
+				res = OrderLogic.getShipperProvinceOrderFullList(userName, 0, startTime, endTime, offset, numb);
+			}
+			else if(status >=1 && status <= 6)
 				res = OrderLogic.getShipperOrderFullByTime(userName, status, startTime, endTime, offset, numb);
 			else 
-				res = OrderLogic.getShipperOrderFullByTime(userName, startTime, endTime, offset, numb);
+				res = OrderLogic.getShipperOrderFullByTime("", 0, startTime, endTime, offset, numb);
 		} else {
 			res = AccountLogic.genErrorSession();
 		}
@@ -712,6 +825,34 @@ public class OrderResource {
 	public Response getConfig(@Context HttpServletRequest req) {
 		
 		JSONObject res = OrderLogic.getConfig();
+		
+		
+		return Response.ok(res.toString()).header("Access-Control-Allow-Origin", "*")
+				.header("Access-Control-Allow-Methods", "PUT, GET, POST, DELETE, OPTIONS").build();
+	}
+	
+	
+	
+	
+	@Path("/get_shop_bill")
+	@GET
+	@Produces("text/plain;charset=utf-8")
+	public Response getShopBill(
+			@QueryParam("shopUserName") @DefaultValue("") String userName,
+			@QueryParam("startTime") @DefaultValue("0000-00-00 00:00:00") String startTime, 
+			@QueryParam("endTime") @DefaultValue("0000-00-00 00:00:00") String endTime, 
+			@QueryParam("offset") @DefaultValue("0") int offset, 
+			@QueryParam("numb") @DefaultValue("10") int numb,
+			@Context HttpServletRequest req) {
+		
+		String sessionKey = req.getHeader("sessionKey");
+		boolean authen = AccountLogic.checkSession(sessionKey);
+		JSONObject res;
+		if(authen) {
+			res = OrderLogic.getShopBill(userName, startTime, endTime, offset, numb);
+		} else {
+			res = AccountLogic.genErrorSession();
+		}
 		
 		
 		return Response.ok(res.toString()).header("Access-Control-Allow-Origin", "*")
