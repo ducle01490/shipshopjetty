@@ -48,6 +48,11 @@ public class OrderResource {
 		String timeNote = null;
 		String productNote = null;
 		
+		
+		int geoId = -1;
+		String city = "";
+		String province = "";
+		
 		String sessionKey = req.getHeader("sessionKey");
 		try {
 			JSONObject jsonObject = new JSONObject(info);
@@ -69,6 +74,11 @@ public class OrderResource {
 			productNote = data.getString("productNote");
 			
 			
+			city = data.getString("city");
+			province = data.getString("province");
+			geoId = data.getInt("cityGeoId");
+			
+			
 			logger.info("register: " + log);
 		} catch (Exception e) { 
 			logger.error(e);
@@ -76,7 +86,10 @@ public class OrderResource {
 		boolean authen = AccountLogic.checkUserSession(userName, User.role_shop, sessionKey);
 		JSONObject res;
 		if(authen) {
-			res = OrderLogic.createOrder(orderTitle, userName, receiveAddress, customerAddress, customerName, customerPhone, deliveryType, deliveryPrice, productPrice, timeNote, productNote);
+			res = OrderLogic.createOrder(orderTitle, userName, 
+					receiveAddress, customerAddress, customerName, customerPhone, 
+					deliveryType, deliveryPrice, productPrice, timeNote, productNote,
+					geoId, city, province);
 			
 		} else {
 			res = AccountLogic.genErrorSession();
@@ -276,6 +289,71 @@ public class OrderResource {
 				.header("Access-Control-Allow-Methods", "PUT, GET, POST, DELETE, OPTIONS").build();
 	}
 	
+	@Path("/update_ship_product_price")
+	@POST
+	@Produces("text/plain;charset=utf-8")
+	public Response updateShipProductPrice(String info, @Context HttpServletRequest req) {
+		String userName = null;
+		long productPrice = 0;
+		int orderId = -1;
+		
+		String sessionKey = req.getHeader("sessionKey");
+		try {
+			JSONObject jsonObject = new JSONObject(info);
+			JSONObject data = jsonObject.getJSONObject("data");
+			JSONObject log = jsonObject.getJSONObject("log");
+
+			userName = data.getString("shipperUserName");
+			productPrice = data.getLong("productPrice");
+			orderId = data.getInt("orderId");
+			
+			logger.info("register: " + log);
+		} catch (Exception e) { 
+			logger.error(e);
+		}
+		
+		boolean authen = AccountLogic.checkUserSession(userName, User.role_shipper, sessionKey);
+		JSONObject res;
+		if(authen) {
+			res = OrderLogic.updateShipProductPrice(orderId, productPrice);
+		} else {
+			res = AccountLogic.genErrorSession();
+		}
+		return Response.ok(res.toString()).header("Access-Control-Allow-Origin", "*")
+				.header("Access-Control-Allow-Methods", "PUT, GET, POST, DELETE, OPTIONS").build();
+	}
+	
+	@Path("/update_shop_confirm")
+	@POST
+	@Produces("text/plain;charset=utf-8")
+	public Response updateShopConfirm(String info, @Context HttpServletRequest req) {
+		String userName = null;
+		int orderId = -1;
+		
+		String sessionKey = req.getHeader("sessionKey");
+		try {
+			JSONObject jsonObject = new JSONObject(info);
+			JSONObject data = jsonObject.getJSONObject("data");
+			JSONObject log = jsonObject.getJSONObject("log");
+
+			userName = data.getString("shopUserName");
+			orderId = data.getInt("orderId");
+			
+			logger.info("register: " + log);
+		} catch (Exception e) { 
+			logger.error(e);
+		}
+		
+		boolean authen = AccountLogic.checkUserSession(userName, User.role_shop, sessionKey);
+		JSONObject res;
+		if(authen) {
+			res = OrderLogic.updateShopConfirm(orderId);
+		} else {
+			res = AccountLogic.genErrorSession();
+		}
+		return Response.ok(res.toString()).header("Access-Control-Allow-Origin", "*")
+				.header("Access-Control-Allow-Methods", "PUT, GET, POST, DELETE, OPTIONS").build();
+	}
 	
 	
 	
