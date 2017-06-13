@@ -208,6 +208,37 @@ public class AccountResource {
 	}
 	
 	
+	
+	@Path("/change_password")
+	@POST
+	@Produces("text/plain;charset=utf-8")
+	public Response changePassword(String info, @Context HttpServletRequest req) {
+		String userName = null;
+		String newPassword = null;
+		String oldPassword = null;
+		int userType = -1;
+		String sessionKey = req.getHeader("sessionKey");
+		try {
+			JSONObject jsonObject = new JSONObject(info);
+			JSONObject data = jsonObject.getJSONObject("data");
+			JSONObject log = jsonObject.getJSONObject("log");
+
+
+			userName = data.getString("userName");
+			newPassword = data.getString("newPassword");
+			oldPassword = data.getString("oldPassword");
+			userType = data.getInt("role");
+			logger.info("update_password: " + log);
+		} catch (Exception e) { 
+			logger.error(e);
+		}
+		
+		JSONObject res = AccountLogic.changePassword(userName, newPassword, oldPassword, userType);
+		return Response.ok(res.toString()).header("Access-Control-Allow-Origin", "*")
+				.header("Access-Control-Allow-Methods", "PUT, GET, POST, DELETE, OPTIONS").build();
+	}
+	
+	
 
 	
 	@Path("/update_phone")
